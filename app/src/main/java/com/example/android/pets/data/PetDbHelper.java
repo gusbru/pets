@@ -17,7 +17,7 @@ import static com.example.android.pets.data.PetContract.PetEntry;
 
 public class PetDbHelper extends SQLiteOpenHelper {
 
-    private static final String DATABASE_NAME = "shelter.db";
+    public static final String DATABASE_NAME = "shelter.db";
     private static final int DATABASE_VERSION = 1;
 
     private static final String SQL_CREATE_ENTRIES = "CREATE TABLE " +

@@ -15,7 +15,9 @@
  */
 package com.example.android.pets;
 
+import android.app.AlertDialog;
 import android.content.ContentValues;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -26,6 +28,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.android.pets.data.PetContract.PetEntry;
 import com.example.android.pets.data.PetDbHelper;
@@ -50,8 +53,6 @@ public class CatalogActivity extends AppCompatActivity {
             }
         });
 
-
-//        insetPet();
         displayDatabaseInfo();
 
     }
@@ -70,11 +71,30 @@ public class CatalogActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             // Respond to a click on the "Insert dummy data" menu option
             case R.id.action_insert_dummy_data:
-                // Do nothing for now
+                long rowID = insertPet();
+                if (rowID == -1) {
+                    Toast.makeText(this, "Not possible to insert pet", Toast.LENGTH_LONG).show();
+                } else {
+                    Toast.makeText(this, "Pet inserted successfully at row " + rowID, Toast.LENGTH_LONG).show();
+                }
+                displayDatabaseInfo();
                 return true;
             // Respond to a click on the "Delete all entries" menu option
             case R.id.action_delete_all_entries:
-                // Do nothing for now
+                new AlertDialog.Builder(this)
+                        .setTitle("Delete")
+                        .setMessage("Do you really want to delete all pets?")
+                        .setIcon(android.R.drawable.ic_dialog_alert)
+                        .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                deleteDatabase(PetDbHelper.DATABASE_NAME);
+                                Toast.makeText(CatalogActivity.this, "All pets deleted!", Toast.LENGTH_LONG).show();
+                            }
+                        })
+                        .setNegativeButton("No", null)
+                        .show();
+
                 return true;
         }
         return super.onOptionsItemSelected(item);
@@ -108,7 +128,7 @@ public class CatalogActivity extends AppCompatActivity {
         }
     }
 
-    private long insetPet() {
+    private long insertPet() {
         // access the database
         PetDbHelper mDbHelper = new PetDbHelper(this);
 
