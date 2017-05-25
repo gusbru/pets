@@ -15,6 +15,8 @@
  */
 package com.example.android.pets;
 
+import android.content.ContentValues;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.AppCompatActivity;
@@ -26,8 +28,10 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 import com.example.android.pets.data.PetContract.PetEntry;
+import com.example.android.pets.data.PetDbHelper;
 
 /**
  * Allows user to create a new pet or edit an existing one.
@@ -105,6 +109,43 @@ public class EditorActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Get information from form and insert it into database
+     *
+     */
+    private void insertPet() {
+
+        // get the info from the filled form
+        String petName = mNameEditText.getText().toString().trim();
+        String petBreed = mBreedEditText.getText().toString().trim();
+        String stringWeight = mWeightEditText.getText().toString().trim();
+        int petWeight = Integer.parseInt(stringWeight);
+
+        // put the value at ContentValue
+        ContentValues values = new ContentValues();
+        values.put(PetEntry.COLUMN_NAME, petName);
+        values.put(PetEntry.COLUMN_BREED, petBreed);
+        values.put(PetEntry.COLUMN_GENDER, mGender);
+        values.put(PetEntry.COLUMN_WEIGHT, petWeight);
+
+        // insert value to database
+        PetDbHelper petDbHelper = new PetDbHelper(this);
+        SQLiteDatabase database = petDbHelper.getWritableDatabase();
+        long petID = database.insert(PetEntry.TABLE_NAME, null, values);
+
+        // call the method to put in the screen the pet id
+        insertedPetStatus(petID);
+
+    }
+
+    private void insertedPetStatus(long petID) {
+        if (petID == -1) {
+            Toast.makeText(this, "Error saving pet", Toast.LENGTH_LONG).show();
+        } else {
+            Toast.makeText(this, "Pet saved with ID: " + petID, Toast.LENGTH_LONG).show();
+        }
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu options from the res/menu/menu_editor.xml file.
@@ -119,7 +160,11 @@ public class EditorActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             // Respond to a click on the "Save" menu option
             case R.id.action_save:
-                // Do nothing for now
+                // insert the pet to database
+                insertPet();
+
+                // close the windows with the forms
+                finish();
                 return true;
             // Respond to a click on the "Delete" menu option
             case R.id.action_delete:
