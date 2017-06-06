@@ -13,6 +13,8 @@ import android.util.Log;
 
 import com.example.android.pets.data.PetContract.PetEntry;
 
+import java.net.URI;
+
 /**
  * This class implements the Content Provider, an interface
  * to communicate the Content Resolver with the Database
@@ -118,17 +120,7 @@ public class PetProvider extends ContentProvider {
         return cursor;
     }
 
-    /**
-     *********** GET TYPE ***********
-     *
-     * @param uri
-     * @return
-     */
-    @Nullable
-    @Override
-    public String getType(@NonNull Uri uri) {
-        return null;
-    }
+
 
     /**
      *********** INSERT ***********
@@ -148,6 +140,61 @@ public class PetProvider extends ContentProvider {
                 throw new IllegalArgumentException("Insertion is not supported for " + uri);
         }
     }
+
+    /**
+     *********** DELETE ***********
+     *
+     * @param uri
+     * @param selection
+     * @param selectionArgs
+     * @return
+     */
+    @Override
+    public int delete(@NonNull Uri uri, @Nullable String selection, @Nullable String[] selectionArgs) {
+        return 0;
+    }
+
+    /**
+     *********** UPDATE ***********
+     *
+     * @param uri
+     * @param values
+     * @param selection
+     * @param selectionArgs
+     * @return
+     */
+    @Override
+    public int update(@NonNull Uri uri, @Nullable ContentValues values,
+                      @Nullable String selection, @Nullable String[] selectionArgs) {
+
+        final int match = sUriMathcer.match(uri);
+        switch (match) {
+            case PETS:
+                return updatePet(uri, values, selection, selectionArgs);
+            case PETS_ID:
+                selection = PetEntry._ID + "=?";
+                // For PET_ID extract the pet ID from the URI
+                String id = String.valueOf(ContentUris.parseId(uri));
+                selectionArgs = new String[] {id};
+                return updatePet(uri, values, selection, selectionArgs);
+            default:
+                throw new IllegalArgumentException("Update is not supported for " + uri);
+        }
+    }
+
+
+    /**
+     *********** GET TYPE ***********
+     *
+     * @param uri
+     * @return
+     */
+    @Nullable
+    @Override
+    public String getType(@NonNull Uri uri) {
+        return null;
+    }
+
 
     /**
      * Helper method to add Pet to the database.
@@ -206,33 +253,42 @@ public class PetProvider extends ContentProvider {
         return gender == PetEntry.GENDER_UNKNOWN || gender == PetEntry.GENDER_MALE || gender == PetEntry.GENDER_FEMALE;
     }
 
-    /**
-     *********** DELETE ***********
-     *
-     * @param uri
-     * @param selection
-     * @param selectionArgs
-     * @return
-     */
-    @Override
-    public int delete(@NonNull Uri uri, @Nullable String selection, @Nullable String[] selectionArgs) {
-        return 0;
+    private int updatePet(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
+
+        // NAME - sanity check
+        if (values.containsKey(PetEntry.COLUMN_NAME)) {
+            String name = values.getAsString(PetEntry.COLUMN_NAME);
+            if (name == null) {
+                throw new IllegalArgumentException("Pet requires a name");
+            }
+        }
+
+        // GENDER - sanity check
+        if (values.containsKey(PetEntry.COLUMN_GENDER)) {
+            Integer gender = values.getAsInteger(PetEntry.COLUMN_GENDER);
+            if (gender == null || !isValidGender(gender)) {
+                throw new IllegalArgumentException("Pet requires valid gender");
+            }
+        }
+
+        // WEIGHT - sanity check
+        if (values.containsKey(PetEntry.COLUMN_WEIGHT)) {
+            Integer weight = values.getAsInteger(PetEntry.COLUMN_WEIGHT);
+            if (weight != null && weight < 0) {
+                throw new IllegalArgumentException("Pet requires valid weight");
+            }
+        }
+
+        // connect with the database
+        SQLiteDatabase database = mPetDbHelper.getWritableDatabase();
+
+        // if there is no value, do not try to update
+        if (values.size() == 0) {
+            return 0;
+        }
+
+        // return the number of update lines
+        return database.update(PetEntry.TABLE_NAME, values, selection, selectionArgs);
     }
-
-    /**
-     *********** UPDATE ***********
-     *
-     * @param uri
-     * @param values
-     * @param selection
-     * @param selectionArgs
-     * @return
-     */
-    @Override
-    public int update(@NonNull Uri uri, @Nullable ContentValues values, @Nullable String selection, @Nullable String[] selectionArgs) {
-        return 0;
-    }
-
-
 
 }
