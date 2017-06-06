@@ -150,8 +150,25 @@ public class PetProvider extends ContentProvider {
      * @return
      */
     @Override
-    public int delete(@NonNull Uri uri, @Nullable String selection, @Nullable String[] selectionArgs) {
-        return 0;
+    public int delete(@NonNull Uri uri, @Nullable String selection,
+                      @Nullable String[] selectionArgs) {
+
+        // connect with the database
+        SQLiteDatabase database = mPetDbHelper.getWritableDatabase();
+
+        final int match = sUriMathcer.match(uri);
+        switch (match) {
+            case PETS:
+                return database.delete(PetEntry.TABLE_NAME, selection, selectionArgs);
+            case PETS_ID:
+                // Get pet ID
+                String id = String.valueOf(ContentUris.parseId(uri));
+                selection = PetEntry._ID + "=?";
+                selectionArgs = new String[] {id};
+                return database.delete(PetEntry.TABLE_NAME, selection, selectionArgs);
+            default:
+                throw new IllegalArgumentException("Delete cannot be done for " + uri);
+        }
     }
 
     /**
@@ -172,9 +189,9 @@ public class PetProvider extends ContentProvider {
             case PETS:
                 return updatePet(uri, values, selection, selectionArgs);
             case PETS_ID:
-                selection = PetEntry._ID + "=?";
                 // For PET_ID extract the pet ID from the URI
                 String id = String.valueOf(ContentUris.parseId(uri));
+                selection = PetEntry._ID + "=?";
                 selectionArgs = new String[] {id};
                 return updatePet(uri, values, selection, selectionArgs);
             default:
