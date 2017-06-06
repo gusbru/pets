@@ -9,6 +9,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import com.example.android.pets.data.PetContract.PetEntry;
 
@@ -20,6 +21,8 @@ import com.example.android.pets.data.PetContract.PetEntry;
  */
 
 public class PetProvider extends ContentProvider {
+
+    private static final String LOG_TAG = PetProvider.class.getSimpleName();
 
     // codes for Uri match
     private static final int PETS = 100;
@@ -80,7 +83,7 @@ public class PetProvider extends ContentProvider {
         Cursor cursor;
 
         // Run the Uri Matcher
-        int matcher = sUriMathcer.match(uri);
+        final int matcher = sUriMathcer.match(uri);
 
         // Select between PETS or PETS_ID case
         switch (matcher) {
@@ -137,7 +140,36 @@ public class PetProvider extends ContentProvider {
     @Nullable
     @Override
     public Uri insert(@NonNull Uri uri, @Nullable ContentValues values) {
-        return null;
+        final int match = sUriMathcer.match(uri);
+        switch (match) {
+            case PETS:
+                return insertPet(uri, values);
+            default:
+                throw new IllegalArgumentException("Insertion is not supported for " + uri);
+        }
+    }
+
+    /**
+     * Helper method to add Pet to the database.
+     * This method is called inside the INSERT method
+     *
+     * @param uri
+     * @param values
+     * @return
+     */
+    private Uri insertPet(Uri uri, ContentValues values) {
+        // access the database in write mode
+        SQLiteDatabase database = mPetDbHelper.getWritableDatabase();
+
+        // insert the pet to database
+        long id = database.insert(PetEntry.TABLE_NAME, null, values);
+
+        if (id == -1) {
+            Log.e(LOG_TAG, "Failed to insert row for " + uri);
+            return null;
+        }
+
+        return ContentUris.withAppendedId(uri, id);
     }
 
     /**

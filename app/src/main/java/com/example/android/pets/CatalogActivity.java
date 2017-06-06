@@ -25,6 +25,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -38,6 +39,8 @@ import com.example.android.pets.data.PetDbHelper;
  * Displays list of pets that were entered and stored in the app.
  */
 public class CatalogActivity extends AppCompatActivity {
+
+    private static final String LOG_TAG = CatalogActivity.class.getSimpleName();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,12 +81,7 @@ public class CatalogActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             // Respond to a click on the "Insert dummy data" menu option
             case R.id.action_insert_dummy_data:
-                long rowID = insertPet();
-                if (rowID == -1) {
-                    Toast.makeText(this, "Not possible to insert pet", Toast.LENGTH_LONG).show();
-                } else {
-                    Toast.makeText(this, "Pet inserted successfully at row " + rowID, Toast.LENGTH_LONG).show();
-                }
+                insertPet();
                 displayDatabaseInfo();
                 return true;
             // Respond to a click on the "Delete all entries" menu option
@@ -174,12 +172,7 @@ public class CatalogActivity extends AppCompatActivity {
         }
     }
 
-    private long insertPet() {
-        // access the database
-        PetDbHelper mDbHelper = new PetDbHelper(this);
-
-        // gets the data repository in write mode
-        SQLiteDatabase db = mDbHelper.getWritableDatabase();
+    private void insertPet() {
 
         // Create a map of values
         ContentValues values = new ContentValues();
@@ -188,7 +181,8 @@ public class CatalogActivity extends AppCompatActivity {
         values.put(PetEntry.COLUMN_GENDER, PetEntry.GENDER_MALE);
         values.put(PetEntry.COLUMN_WEIGHT, 7);
 
-        return db.insert(PetEntry.TABLE_NAME, null, values);
+        // insert the pet
+        Uri uri = getContentResolver().insert(PetEntry.CONTENT_URI, values);
     }
 
 }

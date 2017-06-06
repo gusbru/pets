@@ -17,6 +17,7 @@ package com.example.android.pets;
 
 import android.content.ContentValues;
 import android.database.sqlite.SQLiteDatabase;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.AppCompatActivity;
@@ -128,23 +129,19 @@ public class EditorActivity extends AppCompatActivity {
         values.put(PetEntry.COLUMN_GENDER, mGender);
         values.put(PetEntry.COLUMN_WEIGHT, petWeight);
 
-        // insert value to database
-        PetDbHelper petDbHelper = new PetDbHelper(this);
-        SQLiteDatabase database = petDbHelper.getWritableDatabase();
-        long petID = database.insert(PetEntry.TABLE_NAME, null, values);
 
-        // call the method to put in the screen the pet id
-        insertedPetStatus(petID);
+        // add the pet to database
+        Uri uri = getContentResolver().insert(PetEntry.CONTENT_URI, values);
 
-    }
-
-    private void insertedPetStatus(long petID) {
-        if (petID == -1) {
-            Toast.makeText(this, "Error saving pet", Toast.LENGTH_LONG).show();
+        // Display a Toast message with the status
+        if (uri== null) {
+            Toast.makeText(this, "Error saving pet", Toast.LENGTH_SHORT).show();
         } else {
-            Toast.makeText(this, "Pet saved with ID: " + petID, Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Pet saved", Toast.LENGTH_SHORT).show();
         }
+
     }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
