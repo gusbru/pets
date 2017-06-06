@@ -29,6 +29,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -95,6 +96,7 @@ public class CatalogActivity extends AppCompatActivity {
                             public void onClick(DialogInterface dialog, int which) {
                                 int nDeleted = getContentResolver().delete(PetEntry.CONTENT_URI, null, null);
                                 Toast.makeText(CatalogActivity.this, "All pets (" + nDeleted + ") were deleted!", Toast.LENGTH_LONG).show();
+                                displayDatabaseInfo();
                             }
                         })
                         .setNegativeButton("No", null)
@@ -127,49 +129,11 @@ public class CatalogActivity extends AppCompatActivity {
                 null,
                 null);
 
-
-        try {
-            // Display the number of rows in the Cursor (which reflects the number of rows in the
-            // pets table in the database).
-            TextView displayView = (TextView) findViewById(R.id.text_view_pet);
-            displayView.setText("Number of rows in pets database table: " + cursor.getCount() + "\n\n");
-
-            // display the header
-            displayView.append("_id \t" +
-                    PetEntry.COLUMN_NAME + "\t\t" +
-                    PetEntry.COLUMN_BREED + "\t\t\t" +
-                    PetEntry.COLUMN_GENDER + "\t\t" +
-                    PetEntry.COLUMN_WEIGHT + "\n");
+        ListView petList = (ListView) findViewById(R.id.list_view_pet);
+        PetCursorAdapter petCursorAdapter = new PetCursorAdapter(this, cursor);
+        petList.setAdapter(petCursorAdapter);
 
 
-            while (cursor.moveToNext()) {
-                int idIndex = cursor.getColumnIndex(PetEntry._ID);
-                int id = cursor.getInt(idIndex);
-
-                int nameIndex = cursor.getColumnIndex(PetEntry.COLUMN_NAME);
-                String name = cursor.getString(nameIndex);
-
-                int genderIndex = cursor.getColumnIndex(PetEntry.COLUMN_GENDER);
-                int gender = cursor.getInt(genderIndex);
-
-                int weightIndex = cursor.getColumnIndex(PetEntry.COLUMN_WEIGHT);
-                int weight = cursor.getInt(weightIndex);
-
-
-                displayView.append(
-                        id + "\t\t" +
-                        name + "\t\t\t" +
-                        gender + "\t\t" +
-                        weight + "\n");
-            }
-
-
-
-        } finally {
-            // Always close the cursor when you're done reading from it. This releases all its
-            // resources and makes it invalid.
-            cursor.close();
-        }
     }
 
     private void insertPet() {
