@@ -158,6 +158,28 @@ public class PetProvider extends ContentProvider {
      * @return
      */
     private Uri insertPet(Uri uri, ContentValues values) {
+        // sanity check the values
+        String name = values.getAsString(PetEntry.COLUMN_NAME);
+        Integer gender = values.getAsInteger(PetEntry.COLUMN_GENDER);
+        Integer weight = values.getAsInteger(PetEntry.COLUMN_WEIGHT);
+
+        // check name
+        if (name == null) {
+            throw new IllegalArgumentException("Pet requires a name");
+        }
+
+        // check gender
+        if (gender == null || !isValidGender(gender)) {
+            throw new IllegalArgumentException("Pet requires valid gender");
+        }
+
+        // check weight
+        if ((weight != null) && (weight < 0)) {
+            throw new IllegalArgumentException("Pet requires valid weight");
+        }
+
+
+
         // access the database in write mode
         SQLiteDatabase database = mPetDbHelper.getWritableDatabase();
 
@@ -170,6 +192,18 @@ public class PetProvider extends ContentProvider {
         }
 
         return ContentUris.withAppendedId(uri, id);
+    }
+
+    /**
+     * Check if the entered gender is valid
+     * UNKNOWN = 0
+     * MALE = 1
+     * FEMALE = 2
+     * @param gender
+     * @return
+     */
+    private boolean isValidGender(int gender) {
+        return gender == PetEntry.GENDER_UNKNOWN || gender == PetEntry.GENDER_MALE || gender == PetEntry.GENDER_FEMALE;
     }
 
     /**

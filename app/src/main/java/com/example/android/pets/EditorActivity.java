@@ -22,6 +22,7 @@ import android.os.Bundle;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -38,6 +39,8 @@ import com.example.android.pets.data.PetDbHelper;
  * Allows user to create a new pet or edit an existing one.
  */
 public class EditorActivity extends AppCompatActivity {
+
+    private static final String LOG_TAG = EditorActivity.class.getSimpleName();
 
     /** EditText field to enter the pet's name */
     private EditText mNameEditText;
@@ -120,7 +123,15 @@ public class EditorActivity extends AppCompatActivity {
         String petName = mNameEditText.getText().toString().trim();
         String petBreed = mBreedEditText.getText().toString().trim();
         String stringWeight = mWeightEditText.getText().toString().trim();
-        int petWeight = Integer.parseInt(stringWeight);
+        Integer petWeight;
+        // Check the weight
+        if (stringWeight.equals("")) {
+            petWeight = 0;
+        } else {
+            petWeight = Integer.parseInt(stringWeight);
+        }
+
+        Log.d(LOG_TAG, " petWeight = " + petWeight);
 
         // put the value at ContentValue
         ContentValues values = new ContentValues();
