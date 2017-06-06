@@ -93,8 +93,8 @@ public class CatalogActivity extends AppCompatActivity {
                         .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                deleteDatabase(PetDbHelper.DATABASE_NAME);
-                                Toast.makeText(CatalogActivity.this, "All pets deleted!", Toast.LENGTH_LONG).show();
+                                int nDeleted = getContentResolver().delete(PetEntry.CONTENT_URI, null, null);
+                                Toast.makeText(CatalogActivity.this, "All pets (" + nDeleted + ") were deleted!", Toast.LENGTH_LONG).show();
                             }
                         })
                         .setNegativeButton("No", null)
