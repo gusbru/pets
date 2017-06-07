@@ -264,7 +264,7 @@ public class PetProvider extends ContentProvider {
         Integer weight = values.getAsInteger(PetEntry.COLUMN_WEIGHT);
 
         // check name
-        if (name == null) {
+        if (name.isEmpty()) {
             throw new IllegalArgumentException("Pet requires a name");
         }
 
