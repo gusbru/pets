@@ -18,7 +18,7 @@ import java.net.URI;
 /**
  * This class implements the Content Provider, an interface
  * to communicate the Content Resolver with the Database
- *
+ * <p>
  * Created by gusbru on 6/5/17.
  */
 
@@ -61,7 +61,7 @@ public class PetProvider extends ContentProvider {
 
 
     /**
-     *********** QUERY ***********
+     * ********** QUERY ***********
      *
      * @param uri
      * @param projection
@@ -102,7 +102,7 @@ public class PetProvider extends ContentProvider {
                 break;
             case PETS_ID:
                 selection = PetEntry._ID + "=?";
-                selectionArgs = new String[] {String.valueOf(ContentUris.parseId(uri))};
+                selectionArgs = new String[]{String.valueOf(ContentUris.parseId(uri))};
                 cursor = database.query(
                         PetEntry.TABLE_NAME,
                         projection,
@@ -117,13 +117,15 @@ public class PetProvider extends ContentProvider {
                 throw new IllegalArgumentException("Cannot query unknown URI " + uri);
         }
 
+        // Set notification URI to the cursor
+        cursor.setNotificationUri(getContext().getContentResolver(), uri);
+
         return cursor;
     }
 
 
-
     /**
-     *********** INSERT ***********
+     * ********** INSERT ***********
      *
      * @param uri
      * @param values
@@ -142,7 +144,7 @@ public class PetProvider extends ContentProvider {
     }
 
     /**
-     *********** DELETE ***********
+     * ********** DELETE ***********
      *
      * @param uri
      * @param selection
@@ -157,22 +159,35 @@ public class PetProvider extends ContentProvider {
         SQLiteDatabase database = mPetDbHelper.getWritableDatabase();
 
         final int match = sUriMathcer.match(uri);
+        int rowsDeleted;
+
         switch (match) {
             case PETS:
-                return database.delete(PetEntry.TABLE_NAME, selection, selectionArgs);
+                rowsDeleted = database.delete(PetEntry.TABLE_NAME, selection, selectionArgs);
+                break;
             case PETS_ID:
                 // Get pet ID
                 String id = String.valueOf(ContentUris.parseId(uri));
                 selection = PetEntry._ID + "=?";
-                selectionArgs = new String[] {id};
-                return database.delete(PetEntry.TABLE_NAME, selection, selectionArgs);
+                selectionArgs = new String[]{id};
+                rowsDeleted = database.delete(PetEntry.TABLE_NAME, selection, selectionArgs);
+                break;
             default:
                 throw new IllegalArgumentException("Delete cannot be done for " + uri);
         }
+
+        // notify all the listeners
+        if (rowsDeleted > 0) {
+            getContext().getContentResolver().notifyChange(uri, null);
+        }
+
+        // return the number of rows deleted
+        return rowsDeleted;
+
     }
 
     /**
-     *********** UPDATE ***********
+     * ********** UPDATE ***********
      *
      * @param uri
      * @param values
@@ -192,7 +207,7 @@ public class PetProvider extends ContentProvider {
                 // For PET_ID extract the pet ID from the URI
                 String id = String.valueOf(ContentUris.parseId(uri));
                 selection = PetEntry._ID + "=?";
-                selectionArgs = new String[] {id};
+                selectionArgs = new String[]{id};
                 return updatePet(uri, values, selection, selectionArgs);
             default:
                 throw new IllegalArgumentException("Update is not supported for " + uri);
@@ -201,7 +216,7 @@ public class PetProvider extends ContentProvider {
 
 
     /**
-     *********** GET TYPE ***********
+     * ********** GET TYPE ***********
      *
      * @param uri
      * @return
@@ -218,6 +233,19 @@ public class PetProvider extends ContentProvider {
             default:
                 throw new IllegalStateException("Unknown URI " + uri + " with match " + match);
         }
+    }
+
+    /**
+     * Check if the entered gender is valid
+     * UNKNOWN = 0
+     * MALE = 1
+     * FEMALE = 2
+     *
+     * @param gender
+     * @return
+     */
+    private boolean isValidGender(int gender) {
+        return gender == PetEntry.GENDER_UNKNOWN || gender == PetEntry.GENDER_MALE || gender == PetEntry.GENDER_FEMALE;
     }
 
 
@@ -251,7 +279,6 @@ public class PetProvider extends ContentProvider {
         }
 
 
-
         // access the database in write mode
         SQLiteDatabase database = mPetDbHelper.getWritableDatabase();
 
@@ -263,20 +290,12 @@ public class PetProvider extends ContentProvider {
             return null;
         }
 
+        // Notify all listeners that the data changed
+        getContext().getContentResolver().notifyChange(uri, null);
+
         return ContentUris.withAppendedId(uri, id);
     }
 
-    /**
-     * Check if the entered gender is valid
-     * UNKNOWN = 0
-     * MALE = 1
-     * FEMALE = 2
-     * @param gender
-     * @return
-     */
-    private boolean isValidGender(int gender) {
-        return gender == PetEntry.GENDER_UNKNOWN || gender == PetEntry.GENDER_MALE || gender == PetEntry.GENDER_FEMALE;
-    }
 
     private int updatePet(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
 
@@ -312,8 +331,16 @@ public class PetProvider extends ContentProvider {
             return 0;
         }
 
+        // perform the update in the database
+        int rowsUpdated = database.update(PetEntry.TABLE_NAME, values, selection, selectionArgs);
+
+        // notify listeners that the data changed, if necessary
+        if (rowsUpdated > 0) {
+            getContext().getContentResolver().notifyChange(uri, null);
+        }
+
         // return the number of update lines
-        return database.update(PetEntry.TABLE_NAME, values, selection, selectionArgs);
+        return rowsUpdated;
     }
 
 }

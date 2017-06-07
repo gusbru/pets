@@ -16,9 +16,12 @@
 package com.example.android.pets;
 
 import android.app.AlertDialog;
+import android.app.LoaderManager;
 import android.content.ContentValues;
+import android.content.CursorLoader;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.Loader;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
@@ -40,11 +43,14 @@ import com.example.android.pets.data.PetDbHelper;
 /**
  * Displays list of pets that were entered and stored in the app.
  */
-public class CatalogActivity extends AppCompatActivity {
+public class CatalogActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
 
     private static final String LOG_TAG = CatalogActivity.class.getSimpleName();
+    private static final int URL_LOADER = 0;
 
-    ListView petList;
+    private ListView petList;
+    private PetCursorAdapter mCursorAdapter;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,15 +67,20 @@ public class CatalogActivity extends AppCompatActivity {
             }
         });
 
-        displayDatabaseInfo();
+        petList = (ListView) findViewById(R.id.list_view_pet);
+        View emptyView = findViewById(R.id.empty_view);
+        petList.setEmptyView(emptyView);
+
+        mCursorAdapter = new PetCursorAdapter(this, null);
+        petList.setAdapter(mCursorAdapter);
+
+        // Prepare the loader. Either re-connect with an existing one,
+        // or start a new one
+        getLoaderManager().initLoader(URL_LOADER, null, this);
+
 
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        displayDatabaseInfo();
-    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -86,7 +97,7 @@ public class CatalogActivity extends AppCompatActivity {
             // Respond to a click on the "Insert dummy data" menu option
             case R.id.action_insert_dummy_data:
                 insertPet();
-                displayDatabaseInfo();
+                //displayDatabaseInfo();
                 return true;
             // Respond to a click on the "Delete all entries" menu option
             case R.id.action_delete_all_entries:
@@ -99,7 +110,7 @@ public class CatalogActivity extends AppCompatActivity {
                             public void onClick(DialogInterface dialog, int which) {
                                 int nDeleted = getContentResolver().delete(PetEntry.CONTENT_URI, null, null);
                                 Toast.makeText(CatalogActivity.this, "All pets (" + nDeleted + ") were deleted!", Toast.LENGTH_LONG).show();
-                                displayDatabaseInfo();
+//                                displayDatabaseInfo();
                             }
                         })
                         .setNegativeButton("No", null)
@@ -110,36 +121,6 @@ public class CatalogActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    /**
-     * Temporary helper method to display information in the onscreen TextView about the state of
-     * the pets database.
-     */
-    private void displayDatabaseInfo() {
-
-        String[] projection = {
-                PetEntry._ID,
-                PetEntry.COLUMN_NAME,
-                PetEntry.COLUMN_BREED,
-                PetEntry.COLUMN_GENDER,
-                PetEntry.COLUMN_WEIGHT
-        };
-
-        // Makes the database connection using the Content Provider
-        Cursor cursor = getContentResolver().query(
-                PetEntry.CONTENT_URI,
-                projection,
-                null,
-                null,
-                null);
-
-        petList = (ListView) findViewById(R.id.list_view_pet);
-        View emptyView = findViewById(R.id.empty_view);
-        petList.setEmptyView(emptyView);
-        PetCursorAdapter petCursorAdapter = new PetCursorAdapter(this, cursor);
-        petList.setAdapter(petCursorAdapter);
-
-
-    }
 
     private void insertPet() {
 
@@ -154,4 +135,36 @@ public class CatalogActivity extends AppCompatActivity {
         Uri uri = getContentResolver().insert(PetEntry.CONTENT_URI, values);
     }
 
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+
+        String[] projection = {
+                PetEntry._ID,
+                PetEntry.COLUMN_NAME,
+                PetEntry.COLUMN_BREED
+        };
+
+        return new CursorLoader(
+                this,
+                PetEntry.CONTENT_URI,
+                projection,
+                null,
+                null,
+                null);
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        // Swap the new cursor in.  (The framework will take care of closing the
+        // old cursor once we return.)
+        mCursorAdapter.swapCursor(data);
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+        // This is called when the last Cursor provided to onLoadFinished()
+        // above is about to be closed.  We need to make sure we are no
+        // longer using it.
+        mCursorAdapter.swapCursor(null);
+    }
 }
