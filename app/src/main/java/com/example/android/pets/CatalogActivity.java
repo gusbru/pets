@@ -29,6 +29,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -42,6 +43,8 @@ import com.example.android.pets.data.PetDbHelper;
 public class CatalogActivity extends AppCompatActivity {
 
     private static final String LOG_TAG = CatalogActivity.class.getSimpleName();
+
+    ListView petList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -129,7 +132,9 @@ public class CatalogActivity extends AppCompatActivity {
                 null,
                 null);
 
-        ListView petList = (ListView) findViewById(R.id.list_view_pet);
+        petList = (ListView) findViewById(R.id.list_view_pet);
+        View emptyView = findViewById(R.id.empty_view);
+        petList.setEmptyView(emptyView);
         PetCursorAdapter petCursorAdapter = new PetCursorAdapter(this, cursor);
         petList.setAdapter(petCursorAdapter);
 
