@@ -67,12 +67,23 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
             }
         });
 
+        // setup the list view, empty view and the cursor adapter
         petList = (ListView) findViewById(R.id.list_view_pet);
         View emptyView = findViewById(R.id.empty_view);
         petList.setEmptyView(emptyView);
-
         mCursorAdapter = new PetCursorAdapter(this, null);
         petList.setAdapter(mCursorAdapter);
+
+        // Setup click listener
+        petList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Uri uri = Uri.withAppendedPath(PetEntry.CONTENT_URI, String.valueOf(id));
+                Intent intent = new Intent(CatalogActivity.this, EditorActivity.class);
+                intent.setData(uri);
+                startActivity(intent);
+            }
+        });
 
         // Prepare the loader. Either re-connect with an existing one,
         // or start a new one
@@ -97,7 +108,6 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
             // Respond to a click on the "Insert dummy data" menu option
             case R.id.action_insert_dummy_data:
                 insertPet();
-                //displayDatabaseInfo();
                 return true;
             // Respond to a click on the "Delete all entries" menu option
             case R.id.action_delete_all_entries:
@@ -110,7 +120,6 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
                             public void onClick(DialogInterface dialog, int which) {
                                 int nDeleted = getContentResolver().delete(PetEntry.CONTENT_URI, null, null);
                                 Toast.makeText(CatalogActivity.this, "All pets (" + nDeleted + ") were deleted!", Toast.LENGTH_LONG).show();
-//                                displayDatabaseInfo();
                             }
                         })
                         .setNegativeButton("No", null)
