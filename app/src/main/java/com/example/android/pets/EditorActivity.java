@@ -158,6 +158,12 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
             petWeight = Integer.parseInt(stringWeight);
         }
 
+        // check if all fields are empty
+        if (petName.isEmpty() && petBreed.isEmpty() && stringWeight.isEmpty() && petWeight == 0) {
+            Toast.makeText(this, "No new pet added", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         // put the value at ContentValue
         ContentValues values = new ContentValues();
         values.put(PetEntry.COLUMN_NAME, petName);
