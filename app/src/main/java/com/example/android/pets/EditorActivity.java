@@ -15,10 +15,13 @@
  */
 package com.example.android.pets;
 
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.app.LoaderManager;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.CursorLoader;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
@@ -29,6 +32,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -66,8 +70,18 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
     // Uri for the selected pet
     Uri uriCurrentPet;
 
-    //
+    // Loader ID
     private static final int PET_LOADER = 1;
+
+    // Check if any field was changed
+    private boolean mPetHasChanged = false;
+    private View.OnTouchListener mTouchListener = new View.OnTouchListener() {
+        @Override
+        public boolean onTouch(View v, MotionEvent event) {
+            mPetHasChanged = true;
+            return false;
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,14 +103,17 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
             getLoaderManager().initLoader(PET_LOADER, null, this);
         }
 
-
-
-
         // Find all relevant views that we will need to read user input from
         mNameEditText = (EditText) findViewById(R.id.edit_pet_name);
         mBreedEditText = (EditText) findViewById(R.id.edit_pet_breed);
         mWeightEditText = (EditText) findViewById(R.id.edit_pet_weight);
         mGenderSpinner = (Spinner) findViewById(R.id.spinner_gender);
+
+        // Attach the listener to track changes
+        mNameEditText.setOnTouchListener(mTouchListener);
+        mBreedEditText.setOnTouchListener(mTouchListener);
+        mWeightEditText.setOnTouchListener(mTouchListener);
+        mGenderSpinner.setOnTouchListener(mTouchListener);
 
         setupSpinner();
     }
@@ -231,12 +248,81 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
             // Respond to a click on the "Up" arrow button in the app bar
             case android.R.id.home:
                 // Navigate back to parent activity (CatalogActivity)
-                NavUtils.navigateUpFromSameTask(this);
+                // if no changes, continue back to parent activity
+                if (!mPetHasChanged) {
+                    NavUtils.navigateUpFromSameTask(EditorActivity.this);
+                    return true;
+                }
+
+                // if there are unsaved changes
+                DialogInterface.OnClickListener discardButtonClickListener = new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        // User clicked "Discard Button"
+                        NavUtils.navigateUpFromSameTask(EditorActivity.this);
+                    }
+                };
+
+                // Show Dialog
+                showUnsavedChangesDialog(discardButtonClickListener);
                 return true;
         }
         return super.onOptionsItemSelected(item);
     }
 
+    /**
+     *
+     * Controls the unsaved changes warning dialog
+     *
+     */
+    private void showUnsavedChangesDialog(DialogInterface.OnClickListener discardButtonClickListener) {
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(R.string.unsaved_changes_dialog_msg);
+        builder.setPositiveButton(R.string.discard, discardButtonClickListener);
+        builder.setNegativeButton(R.string.keep_editing, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                // User clicked "Keep Editing"
+                if (dialog != null) {
+                    dialog.dismiss();
+                }
+            }
+        });
+
+        // Create and show the dialog
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
+
+    }
+
+    @Override
+    public void onBackPressed() {
+        // nothing was changed
+        if (!mPetHasChanged) {
+            super.onBackPressed();
+        }
+
+        // something was changed
+        DialogInterface.OnClickListener discardButtonClickListener = new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                // User clicked "Discard Button"
+                finish();
+            }
+        };
+
+        // Show dialog
+        showUnsavedChangesDialog(discardButtonClickListener);
+
+    }
+
+    /**
+     *
+     * @param id
+     * @param args
+     * @return
+     */
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
 
@@ -257,6 +343,11 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
                 null);
     }
 
+    /**
+     *
+     * @param loader
+     * @param data
+     */
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
         data.moveToFirst();
@@ -270,6 +361,10 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         mGenderSpinner.setSelection(gender);
     }
 
+    /**
+     *
+     * @param loader
+     */
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
         mNameEditText.clearComposingText();
