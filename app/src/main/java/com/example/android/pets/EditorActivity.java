@@ -16,18 +16,17 @@
 package com.example.android.pets;
 
 import android.app.LoaderManager;
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -38,7 +37,6 @@ import android.widget.Spinner;
 import android.widget.Toast;
 
 import com.example.android.pets.data.PetContract.PetEntry;
-import com.example.android.pets.data.PetDbHelper;
 
 /**
  * Allows user to create a new pet or edit an existing one.
@@ -146,7 +144,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
      * Get information from form and insert it into database
      *
      */
-    private void insertPet() {
+    private void savePet() {
 
         // get the info from the filled form
         String petName = mNameEditText.getText().toString().trim();
@@ -154,13 +152,11 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         String stringWeight = mWeightEditText.getText().toString().trim();
         Integer petWeight;
         // Check the weight
-        if (stringWeight.equals("")) {
+        if (stringWeight.isEmpty()) {
             petWeight = 0;
         } else {
             petWeight = Integer.parseInt(stringWeight);
         }
-
-        Log.d(LOG_TAG, " petWeight = " + petWeight);
 
         // put the value at ContentValue
         ContentValues values = new ContentValues();
@@ -170,15 +166,35 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         values.put(PetEntry.COLUMN_WEIGHT, petWeight);
 
 
-        // add the pet to database
-        Uri uri = getContentResolver().insert(PetEntry.CONTENT_URI, values);
+        if (uriCurrentPet == null) {
+            // ***** New pet *****
 
-        // Display a Toast message with the status
-        if (uri== null) {
-            Toast.makeText(this, "Error saving pet", Toast.LENGTH_SHORT).show();
+            // add the pet to database
+            Uri uri = getContentResolver().insert(PetEntry.CONTENT_URI, values);
+
+            // Display a Toast message with the status
+            if (uri== null) {
+                Toast.makeText(this, "Error saving pet", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Pet saved", Toast.LENGTH_SHORT).show();
+            }
         } else {
-            Toast.makeText(this, "Pet saved", Toast.LENGTH_SHORT).show();
+            // ***** Update existing pet *****
+
+            int nUpdates = getContentResolver().update(uriCurrentPet, values, null, null);
+
+            if (nUpdates == 0) {
+                Toast.makeText(this, "Pet Information NOT Updated", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Pet Update", Toast.LENGTH_SHORT).show();
+            }
+
+
         }
+
+
+
+
 
     }
 
@@ -198,8 +214,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
             // Respond to a click on the "Save" menu option
             case R.id.action_save:
                 // insert the pet to database
-                insertPet();
-
+                savePet();
                 // close the windows with the forms
                 finish();
                 return true;
