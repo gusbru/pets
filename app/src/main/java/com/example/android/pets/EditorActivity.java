@@ -71,11 +71,9 @@ public class EditorActivity extends AppCompatActivity {
 
         // check if it is a new pet or update pet
         if (uri == null) {
-            setTitle("New Pet");
-            Log.d(LOG_TAG, "new pet");
+            setTitle(getString(R.string.editor_activity_title_new_pet));
         } else {
-            setTitle("Update Pet");
-            Log.d(LOG_TAG, uri.toString() + " now at Editor activity");
+            setTitle(getString(R.string.editor_activity_title_edit_pet));
         }
 
 

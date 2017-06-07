@@ -17,6 +17,7 @@ package com.example.android.pets;
 
 import android.app.AlertDialog;
 import android.app.LoaderManager;
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.CursorLoader;
 import android.content.DialogInterface;
@@ -78,7 +79,7 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
         petList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Uri uri = Uri.withAppendedPath(PetEntry.CONTENT_URI, String.valueOf(id));
+                Uri uri = ContentUris.withAppendedId(PetEntry.CONTENT_URI, id);
                 Intent intent = new Intent(CatalogActivity.this, EditorActivity.class);
                 intent.setData(uri);
                 startActivity(intent);
